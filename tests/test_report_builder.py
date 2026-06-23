@@ -13,10 +13,11 @@ def test_build_markdown_report():
           "object_name": "ЖК Лесной",
           "agreed_tasks": [
             {
+              "task_summary": "Залить бетон",
               "room_or_zone": "Секция 1",
               "responsible": "Ivanov",
               "deadline_text": "завтра",
-              "status": "Новое",
+              "status": "Согласовано, в работе",
               "approval_fact": true,
               "deadline_status": "В срок",
               "confidence": 0.9,

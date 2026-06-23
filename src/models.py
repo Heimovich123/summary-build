@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Literal
 
 class ExtractedItem(BaseModel):
+    task_summary: str
     room_or_zone: Optional[str] = None
     initiator: Optional[str] = None
     responsible: Optional[str] = None
@@ -12,9 +13,20 @@ class ExtractedItem(BaseModel):
     deadline_status: Literal["В срок", "Просрочено", "Риск срыва", "Не определен"] = "Не определен"
     final_decision: Optional[str] = None
     change_history: Optional[str] = None
-    status: Literal["Новое", "В работе", "Выполнено", "Отменено", "Обсуждается"] = "Новое"
+    status: Literal[
+        "Согласовано, в работе", 
+        "Обсуждается", 
+        "Решение не принято", 
+        "Ответственный не назначен", 
+        "Дедлайн не установлен", 
+        "Ожидает согласования", 
+        "Просрочено", 
+        "Решение изменено", 
+        "Обсуждение без результата", 
+        "Требует внимания руководителя"
+    ] = "Обсуждается"
     next_action: Optional[str] = None
-    confidence: float = 1.0
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source_chat_id: int
     source_message_ids: List[int]
     source_message_links: List[str] = []

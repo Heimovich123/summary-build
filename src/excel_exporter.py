@@ -20,7 +20,7 @@ def export_to_excel(date_str: str = None, object_name: str = None) -> str:
     ws.title = "Аналитика чатов"
     
     headers = [
-        "Объект", "Категория", "Зона/Помещение", "Инициатор", "Ответственный", 
+        "Объект", "Категория", "Краткое содержание", "Зона/Помещение", "Инициатор", "Ответственный", 
         "Согласующий", "Факт согласования", "Дедлайн (текст)", "Дедлайн (дата)", 
         "Статус дедлайна", "Итоговое решение", "История изменений", "Статус", 
         "Следующее действие", "Уверенность", "ID Чата", "Ссылки на сообщения"
@@ -46,6 +46,7 @@ def export_to_excel(date_str: str = None, object_name: str = None) -> str:
                 row = [
                     obj.object_name,
                     cat_ru,
+                    item.task_summary,
                     item.room_or_zone,
                     item.initiator,
                     item.responsible,

@@ -21,6 +21,7 @@ The JSON schema should match this structure:
       "object_name": "Name of the construction object",
       "agreed_tasks": [
         {
+          "task_summary": "Short summary of the task/decision",
           "room_or_zone": "Zone or null",
           "initiator": "Name or null",
           "responsible": "Name or null",
@@ -31,7 +32,7 @@ The JSON schema should match this structure:
           "deadline_status": "В срок" | "Просрочено" | "Риск срыва" | "Не определен",
           "final_decision": "Text or null",
           "change_history": "Text or null",
-          "status": "Новое" | "В работе" | "Выполнено" | "Отменено" | "Обсуждается",
+          "status": "Согласовано, в работе" | "Обсуждается" | "Решение не принято" | "Ответственный не назначен" | "Дедлайн не установлен" | "Ожидает согласования" | "Просрочено" | "Решение изменено" | "Обсуждение без результата" | "Требует внимания руководителя",
           "next_action": "Text or null",
           "confidence": 0.9,
           "source_chat_id": 123456,

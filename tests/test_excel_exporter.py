@@ -14,10 +14,11 @@ def test_export_to_excel():
           "object_name": "ЖК Лесной",
           "agreed_tasks": [
             {
+              "task_summary": "Залить бетон",
               "room_or_zone": "Секция 1",
               "responsible": "Ivanov",
               "deadline_text": "завтра",
-              "status": "Новое",
+              "status": "Согласовано, в работе",
               "approval_fact": true,
               "deadline_status": "В срок",
               "confidence": 0.9,
@@ -44,5 +45,6 @@ def test_export_to_excel():
     assert len(rows) == 2 # header + 1 row
     assert rows[1][0].value == "ЖК Лесной"
     assert rows[1][1].value == "Согласованные задачи"
-    assert rows[1][2].value == "Секция 1"
+    assert rows[1][2].value == "Залить бетон"
+    assert rows[1][3].value == "Секция 1"
 

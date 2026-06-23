@@ -12,10 +12,11 @@ def test_valid_json_schema():
           "object_name": "ЖК Лесной",
           "agreed_tasks": [
             {
+              "task_summary": "Залить бетон в Секции 1",
               "room_or_zone": "Секция 1",
               "responsible": "Ivanov",
               "deadline_text": "завтра до обеда",
-              "status": "В работе",
+              "status": "Согласовано, в работе",
               "approval_fact": true,
               "deadline_status": "В срок",
               "confidence": 0.9,
@@ -33,6 +34,8 @@ def test_valid_json_schema():
     assert len(report.objects) == 1
     assert report.objects[0].object_name == "ЖК Лесной"
     assert len(report.objects[0].agreed_tasks) == 1
+    assert report.objects[0].agreed_tasks[0].task_summary == "Залить бетон в Секции 1"
+    assert report.objects[0].agreed_tasks[0].status == "Согласовано, в работе"
     assert report.objects[0].agreed_tasks[0].source_message_ids == [101, 102]
     assert report.objects[0].agreed_tasks[0].source_message_links == ["https://t.me/c/123456789/101", "https://t.me/c/123456789/102"]
 
@@ -44,7 +47,8 @@ def test_invalid_json_schema():
         {
           "agreed_tasks": [
             {
-              "room_or_zone": "Секция 1"
+              "room_or_zone": "Секция 1",
+              "confidence": 1.5
             }
           ]
         }

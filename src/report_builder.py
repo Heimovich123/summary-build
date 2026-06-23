@@ -39,7 +39,7 @@ def build_markdown_report(date_str: str, object_name: str = None) -> str:
                 status = f" **[{item.status}]**" if item.status else ""
                 links = ", ".join(item.source_message_links) if item.source_message_links else ", ".join(map(str, item.source_message_ids))
                 
-                desc = item.final_decision or item.next_action or "Нет описания"
+                desc = item.task_summary
                 
                 md.append(f"-{status} {desc}{resp}{deadline} (Источники: {links})")
             md.append("\n")
