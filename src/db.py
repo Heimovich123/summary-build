@@ -62,16 +62,23 @@ def insert_message(message_id: int, chat_id: int, sender_id: int, sender_name: s
     finally:
         conn.close()
 
-def get_unprocessed_messages():
+def get_unprocessed_messages(object_name: str = None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+    query = '''
         SELECT m.id, m.message_id, m.chat_id, m.sender_name, m.text, m.timestamp, c.object_name, c.chat_title
         FROM messages m
         JOIN chat_object_map c ON m.chat_id = c.chat_id
         WHERE m.is_processed = 0 AND c.is_active = 1
-        ORDER BY m.timestamp ASC
-    ''')
+    '''
+    params = []
+    if object_name:
+        query += ' AND c.object_name = ?'
+        params.append(object_name)
+        
+    query += ' ORDER BY m.timestamp ASC'
+    
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]

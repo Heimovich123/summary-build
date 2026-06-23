@@ -12,19 +12,20 @@ def test_export_to_excel():
       "objects": [
         {
           "object_name": "ЖК Лесной",
-          "tasks": [
+          "agreed_tasks": [
             {
-              "description": "Залить бетон",
-              "assignee": "Ivanov",
-              "deadline": "завтра",
-              "status": "New",
+              "room_or_zone": "Секция 1",
+              "responsible": "Ivanov",
+              "deadline_text": "завтра",
+              "status": "Новое",
+              "approval_fact": true,
+              "deadline_status": "В срок",
+              "confidence": 0.9,
               "source_message_ids": [101],
-              "source_chat_id": 123
+              "source_chat_id": 123,
+              "final_decision": "Залить бетон"
             }
-          ],
-          "decisions": [],
-          "unresolved_discussions": [],
-          "changed_decisions": []
+          ]
         }
       ]
     }
@@ -36,11 +37,12 @@ def test_export_to_excel():
     assert os.path.exists(filename)
     
     wb = openpyxl.load_workbook(filename)
-    assert "Tasks" in wb.sheetnames
-    assert "Decisions" in wb.sheetnames
+    assert "Аналитика чатов" in wb.sheetnames
     
-    ws = wb["Tasks"]
+    ws = wb["Аналитика чатов"]
     rows = list(ws.rows)
     assert len(rows) == 2 # header + 1 row
     assert rows[1][0].value == "ЖК Лесной"
-    assert rows[1][1].value == "Залить бетон"
+    assert rows[1][1].value == "Согласованные задачи"
+    assert rows[1][2].value == "Секция 1"
+

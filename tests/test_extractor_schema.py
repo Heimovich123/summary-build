@@ -10,19 +10,20 @@ def test_valid_json_schema():
       "objects": [
         {
           "object_name": "ЖК Лесной",
-          "tasks": [
+          "agreed_tasks": [
             {
-              "description": "Залить бетон",
-              "assignee": "Ivanov",
-              "deadline": "завтра до обеда",
-              "status": "In Progress",
+              "room_or_zone": "Секция 1",
+              "responsible": "Ivanov",
+              "deadline_text": "завтра до обеда",
+              "status": "В работе",
+              "approval_fact": true,
+              "deadline_status": "В срок",
+              "confidence": 0.9,
               "source_message_ids": [101, 102],
-              "source_chat_id": -100123456789
+              "source_chat_id": -100123456789,
+              "final_decision": "Залить бетон"
             }
-          ],
-          "decisions": [],
-          "unresolved_discussions": [],
-          "changed_decisions": []
+          ]
         }
       ]
     }
@@ -31,8 +32,9 @@ def test_valid_json_schema():
     assert report.date == "2026-06-23"
     assert len(report.objects) == 1
     assert report.objects[0].object_name == "ЖК Лесной"
-    assert len(report.objects[0].tasks) == 1
-    assert report.objects[0].tasks[0].source_message_ids == [101, 102]
+    assert len(report.objects[0].agreed_tasks) == 1
+    assert report.objects[0].agreed_tasks[0].source_message_ids == [101, 102]
+    assert report.objects[0].agreed_tasks[0].source_message_links == ["https://t.me/c/123456789/101", "https://t.me/c/123456789/102"]
 
 def test_invalid_json_schema():
     invalid_json = """
@@ -40,9 +42,9 @@ def test_invalid_json_schema():
       "date": "2026-06-23",
       "objects": [
         {
-          "tasks": [
+          "agreed_tasks": [
             {
-              "description": "Залить бетон"
+              "room_or_zone": "Секция 1"
             }
           ]
         }

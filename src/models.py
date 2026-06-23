@@ -1,40 +1,44 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, model_validator
+from typing import List, Optional, Literal
 
-class Task(BaseModel):
-    description: str
-    assignee: Optional[str] = None
-    deadline: Optional[str] = None
-    status: str = Field(description="E.g., 'New', 'In Progress', 'Completed'")
-    source_message_ids: List[int] = Field(description="IDs of the messages where this task was discussed")
-    source_chat_id: int = Field(description="ID of the chat")
-
-class Decision(BaseModel):
-    description: str
-    context: Optional[str] = None
-    source_message_ids: List[int] = Field(description="IDs of the messages where this decision was made")
+class ExtractedItem(BaseModel):
+    room_or_zone: Optional[str] = None
+    initiator: Optional[str] = None
+    responsible: Optional[str] = None
+    approver: Optional[str] = None
+    approval_fact: bool = False
+    deadline_text: Optional[str] = None
+    deadline_date: Optional[str] = None
+    deadline_status: Literal["В срок", "Просрочено", "Риск срыва", "Не определен"] = "Не определен"
+    final_decision: Optional[str] = None
+    change_history: Optional[str] = None
+    status: Literal["Новое", "В работе", "Выполнено", "Отменено", "Обсуждается"] = "Новое"
+    next_action: Optional[str] = None
+    confidence: float = 1.0
     source_chat_id: int
-
-class UnresolvedDiscussion(BaseModel):
-    topic: str
-    participants: List[str]
-    current_status: str
     source_message_ids: List[int]
-    source_chat_id: int
+    source_message_links: List[str] = []
 
-class ChangedDecision(BaseModel):
-    old_decision: str
-    new_decision: str
-    reason: Optional[str] = None
-    source_message_ids: List[int]
-    source_chat_id: int
+    @model_validator(mode="after")
+    def generate_links(self) -> 'ExtractedItem':
+        if not self.source_message_links and self.source_message_ids:
+            links = []
+            str_chat_id = str(self.source_chat_id)
+            if str_chat_id.startswith("-100"):
+                clean_chat_id = str_chat_id.replace("-100", "")
+                for msg_id in self.source_message_ids:
+                    links.append(f"https://t.me/c/{clean_chat_id}/{msg_id}")
+            self.source_message_links = links
+        return self
 
 class ObjectReport(BaseModel):
     object_name: str
-    tasks: List[Task] = []
-    decisions: List[Decision] = []
-    unresolved_discussions: List[UnresolvedDiscussion] = []
-    changed_decisions: List[ChangedDecision] = []
+    agreed_tasks: List[ExtractedItem] = []
+    unresolved_discussions: List[ExtractedItem] = []
+    missing_deadline: List[ExtractedItem] = []
+    missing_responsible: List[ExtractedItem] = []
+    changed_decisions: List[ExtractedItem] = []
+    needs_manager_attention: List[ExtractedItem] = []
 
 class DailyReport(BaseModel):
     date: str

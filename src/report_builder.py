@@ -3,56 +3,56 @@ from datetime import datetime
 from .db import get_analysis_result
 from .models import DailyReport
 
-def build_markdown_report(date_str: str) -> str:
+def build_markdown_report(date_str: str, object_name: str = None) -> str:
     raw_json = get_analysis_result(date_str)
     if not raw_json:
-        return f"No report found for date: {date_str}"
+        return f"Отчет за дату {date_str} не найден."
     
     report = DailyReport(**json.loads(raw_json))
     
-    md = [f"# Construction Chat Daily Report: {report.date}\n"]
+    md = [f"# Ежедневный отчет по чатам: {report.date}\n"]
     
+    categories_map = {
+        "agreed_tasks": "Согласованные задачи",
+        "unresolved_discussions": "Обсуждалось, но решение не принято",
+        "missing_deadline": "Есть решение, но нет дедлайна",
+        "missing_responsible": "Нет ответственного",
+        "changed_decisions": "Изменения решений",
+        "needs_manager_attention": "Требует внимания руководителя"
+    }
+
     for obj in report.objects:
-        md.append(f"## Object: {obj.object_name}\n")
-        
-        if obj.tasks:
-            md.append("### Tasks")
-            for t in obj.tasks:
-                assignee = f" (Assignee: {t.assignee})" if t.assignee else ""
-                deadline = f" [Deadline: {t.deadline}]" if t.deadline else ""
-                md.append(f"- **{t.status}**: {t.description}{assignee}{deadline} (Source Msgs: {t.source_message_ids})")
-            md.append("\n")
+        if object_name and obj.object_name != object_name:
+            continue
             
-        if obj.decisions:
-            md.append("### Decisions")
-            for d in obj.decisions:
-                md.append(f"- {d.description} (Source Msgs: {d.source_message_ids})")
-            md.append("\n")
-
-        if obj.changed_decisions:
-            md.append("### Changed Decisions")
-            for cd in obj.changed_decisions:
-                reason = f" (Reason: {cd.reason})" if cd.reason else ""
-                md.append(f"- **Old**: {cd.old_decision} -> **New**: {cd.new_decision}{reason} (Source Msgs: {cd.source_message_ids})")
-            md.append("\n")
-
-        if obj.unresolved_discussions:
-            md.append("### Unresolved Discussions")
-            for u in obj.unresolved_discussions:
-                md.append(f"- **Topic**: {u.topic}")
-                md.append(f"  - Participants: {', '.join(u.participants)}")
-                md.append(f"  - Status: {u.current_status}")
-                md.append(f"  - Source Msgs: {u.source_message_ids}")
+        md.append(f"## Объект: {obj.object_name}\n")
+        
+        for cat_attr, cat_ru in categories_map.items():
+            items = getattr(obj, cat_attr, [])
+            if not items:
+                continue
+                
+            md.append(f"### {cat_ru}")
+            for item in items:
+                resp = f" (Отв: {item.responsible})" if item.responsible else ""
+                deadline = f" [Дедлайн: {item.deadline_text or item.deadline_date}]" if (item.deadline_text or item.deadline_date) else ""
+                status = f" **[{item.status}]**" if item.status else ""
+                links = ", ".join(item.source_message_links) if item.source_message_links else ", ".join(map(str, item.source_message_ids))
+                
+                desc = item.final_decision or item.next_action or "Нет описания"
+                
+                md.append(f"-{status} {desc}{resp}{deadline} (Источники: {links})")
             md.append("\n")
             
     return "\n".join(md)
 
-def generate_and_save_report(date_str: str = None) -> str:
+def generate_and_save_report(date_str: str = None, object_name: str = None) -> str:
     if not date_str:
         date_str = datetime.now().strftime('%Y-%m-%d')
-    md = build_markdown_report(date_str)
+    md = build_markdown_report(date_str, object_name)
     
-    filename = f"data/report_{date_str}.md"
+    suffix = f"_{object_name}" if object_name else ""
+    filename = f"data/report_{date_str}{suffix}.md"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(md)
     print(f"Markdown report saved to {filename}")

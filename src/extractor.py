@@ -19,24 +19,36 @@ The JSON schema should match this structure:
   "objects": [
     {
       "object_name": "Name of the construction object",
-      "tasks": [
+      "agreed_tasks": [
         {
-          "description": "Task text",
-          "assignee": "Name or null",
-          "deadline": "Deadline or null",
-          "status": "New",
-          "source_message_ids": [101, 102],
-          "source_chat_id": 123456
+          "room_or_zone": "Zone or null",
+          "initiator": "Name or null",
+          "responsible": "Name or null",
+          "approver": "Name or null",
+          "approval_fact": true,
+          "deadline_text": "Text or null",
+          "deadline_date": "YYYY-MM-DD or null",
+          "deadline_status": "В срок" | "Просрочено" | "Риск срыва" | "Не определен",
+          "final_decision": "Text or null",
+          "change_history": "Text or null",
+          "status": "Новое" | "В работе" | "Выполнено" | "Отменено" | "Обсуждается",
+          "next_action": "Text or null",
+          "confidence": 0.9,
+          "source_chat_id": 123456,
+          "source_message_ids": [101, 102]
         }
       ],
-      "decisions": [],
       "unresolved_discussions": [],
-      "changed_decisions": []
+      "missing_deadline": [],
+      "missing_responsible": [],
+      "changed_decisions": [],
+      "needs_manager_attention": []
     }
   ]
 }
 
-Analyze the messages and return ONLY the JSON. Include `source_message_ids` and `source_chat_id` for every item extracted to ensure traceability.
+Analyze the messages and return ONLY the JSON. Include `source_message_ids` and `source_chat_id` for every item extracted to ensure traceability. 
+`approval_fact` must be a boolean. `confidence` must be a float between 0.0 and 1.0.
 """
 
 def build_prompt(messages: list[dict]) -> str:
@@ -87,8 +99,8 @@ def extract_and_validate(messages_text: str) -> DailyReport | None:
         save_failed_extraction(raw_json if 'raw_json' in locals() else "No response", str(e))
         return None
 
-def run_extraction():
-    unprocessed = get_unprocessed_messages()
+def run_extraction(object_name: str = None):
+    unprocessed = get_unprocessed_messages(object_name)
     if not unprocessed:
         print("No new messages to process.")
         return

@@ -4,7 +4,7 @@ from datetime import datetime
 from .db import get_analysis_result
 from .models import DailyReport
 
-def export_to_excel(date_str: str = None) -> str:
+def export_to_excel(date_str: str = None, object_name: str = None) -> str:
     if not date_str:
         date_str = datetime.now().strftime('%Y-%m-%d')
         
@@ -16,38 +16,56 @@ def export_to_excel(date_str: str = None) -> str:
     report = DailyReport(**json.loads(raw_json))
     
     wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Аналитика чатов"
     
-    # Tasks Sheet
-    ws_tasks = wb.active
-    ws_tasks.title = "Tasks"
-    ws_tasks.append(["Object Name", "Description", "Assignee", "Deadline", "Status", "Source Chat ID", "Source Message IDs"])
-    
-    # Decisions Sheet
-    ws_dec = wb.create_sheet(title="Decisions")
-    ws_dec.append(["Object Name", "Description", "Context", "Source Chat ID", "Source Message IDs"])
-    
-    # Changed Decisions Sheet
-    ws_changed = wb.create_sheet(title="Changed Decisions")
-    ws_changed.append(["Object Name", "Old Decision", "New Decision", "Reason", "Source Chat ID", "Source Message IDs"])
+    headers = [
+        "Объект", "Категория", "Зона/Помещение", "Инициатор", "Ответственный", 
+        "Согласующий", "Факт согласования", "Дедлайн (текст)", "Дедлайн (дата)", 
+        "Статус дедлайна", "Итоговое решение", "История изменений", "Статус", 
+        "Следующее действие", "Уверенность", "ID Чата", "Ссылки на сообщения"
+    ]
+    ws.append(headers)
 
-    # Unresolved Discussions Sheet
-    ws_unresolved = wb.create_sheet(title="Unresolved")
-    ws_unresolved.append(["Object Name", "Topic", "Participants", "Current Status", "Source Chat ID", "Source Message IDs"])
+    categories_map = {
+        "agreed_tasks": "Согласованные задачи",
+        "unresolved_discussions": "Обсуждалось, но решение не принято",
+        "missing_deadline": "Есть решение, но нет дедлайна",
+        "missing_responsible": "Нет ответственного",
+        "changed_decisions": "Изменения решений",
+        "needs_manager_attention": "Требует внимания руководителя"
+    }
 
     for obj in report.objects:
-        for t in obj.tasks:
-            ws_tasks.append([obj.object_name, t.description, t.assignee, t.deadline, t.status, t.source_chat_id, str(t.source_message_ids)])
+        if object_name and obj.object_name != object_name:
+            continue
             
-        for d in obj.decisions:
-            ws_dec.append([obj.object_name, d.description, d.context, d.source_chat_id, str(d.source_message_ids)])
-            
-        for cd in obj.changed_decisions:
-            ws_changed.append([obj.object_name, cd.old_decision, cd.new_decision, cd.reason, cd.source_chat_id, str(cd.source_message_ids)])
-            
-        for u in obj.unresolved_discussions:
-            ws_unresolved.append([obj.object_name, u.topic, ", ".join(u.participants), u.current_status, u.source_chat_id, str(u.source_message_ids)])
+        for cat_attr, cat_ru in categories_map.items():
+            items = getattr(obj, cat_attr, [])
+            for item in items:
+                row = [
+                    obj.object_name,
+                    cat_ru,
+                    item.room_or_zone,
+                    item.initiator,
+                    item.responsible,
+                    item.approver,
+                    "Да" if item.approval_fact else "Нет",
+                    item.deadline_text,
+                    item.deadline_date,
+                    item.deadline_status,
+                    item.final_decision,
+                    item.change_history,
+                    item.status,
+                    item.next_action,
+                    item.confidence,
+                    item.source_chat_id,
+                    ", ".join(item.source_message_links) if item.source_message_links else ", ".join(map(str, item.source_message_ids))
+                ]
+                ws.append(row)
 
-    filename = f"data/report_{date_str}.xlsx"
+    suffix = f"_{object_name}" if object_name else ""
+    filename = f"data/report_{date_str}{suffix}.xlsx"
     wb.save(filename)
     print(f"Excel report saved to {filename}")
     return filename

@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
-from .config import TELEGRAM_REPORT_BOT_TOKEN, TELEGRAM_SOURCE_CHAT_IDS
+from .config import TELEGRAM_COLLECTOR_BOT_TOKEN, TELEGRAM_SOURCE_CHAT_IDS
 from .db import insert_message
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -23,12 +23,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"Bot saved message from {chat.id}")
 
 def run_collector_bot():
-    if not TELEGRAM_REPORT_BOT_TOKEN:
-        print("TELEGRAM_REPORT_BOT_TOKEN not set")
+    if not TELEGRAM_COLLECTOR_BOT_TOKEN:
+        print("TELEGRAM_COLLECTOR_BOT_TOKEN is not set.")
         return
-        
-    app = ApplicationBuilder().token(TELEGRAM_REPORT_BOT_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    application = ApplicationBuilder().token(TELEGRAM_COLLECTOR_BOT_TOKEN).build()
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     print("Starting bot collector...")
-    app.run_polling()
+    application.run_polling()

@@ -23,6 +23,7 @@ def main():
         "daily-report"
     ], help="Command to run")
     parser.add_argument("--date", type=str, help="Date for report (YYYY-MM-DD)", default=datetime.now().strftime('%Y-%m-%d'))
+    parser.add_argument("--object", type=str, help="Filter by object_name", default=None)
 
     args = parser.parse_args()
 
@@ -36,20 +37,21 @@ def main():
     elif args.command == "collect-userbot":
         run_collector_userbot()
     elif args.command == "extract":
-        run_extraction()
+        run_extraction(args.object)
     elif args.command == "report":
-        md_path = generate_and_save_report(args.date)
-        excel_path = export_to_excel(args.date)
+        md_path = generate_and_save_report(args.date, args.object)
+        excel_path = export_to_excel(args.date, args.object)
         print(f"Reports generated: {md_path}, {excel_path}")
     elif args.command == "send-report":
-        md_path = f"data/report_{args.date}.md"
-        excel_path = f"data/report_{args.date}.xlsx"
+        suffix = f"_{args.object}" if args.object else ""
+        md_path = f"data/report_{args.date}{suffix}.md"
+        excel_path = f"data/report_{args.date}{suffix}.xlsx"
         run_send_report(md_path, excel_path)
     elif args.command == "daily-report":
         print("Running daily report pipeline...")
-        run_extraction()
-        md_path = generate_and_save_report(args.date)
-        excel_path = export_to_excel(args.date)
+        run_extraction(args.object)
+        md_path = generate_and_save_report(args.date, args.object)
+        excel_path = export_to_excel(args.date, args.object)
         run_send_report(md_path, excel_path)
 
 if __name__ == "__main__":

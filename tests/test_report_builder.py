@@ -11,19 +11,20 @@ def test_build_markdown_report():
       "objects": [
         {
           "object_name": "ЖК Лесной",
-          "tasks": [
+          "agreed_tasks": [
             {
-              "description": "Залить бетон",
-              "assignee": "Ivanov",
-              "deadline": "завтра",
-              "status": "New",
+              "room_or_zone": "Секция 1",
+              "responsible": "Ivanov",
+              "deadline_text": "завтра",
+              "status": "Новое",
+              "approval_fact": true,
+              "deadline_status": "В срок",
+              "confidence": 0.9,
               "source_message_ids": [101],
-              "source_chat_id": 123
+              "source_chat_id": 123,
+              "final_decision": "Залить бетон"
             }
-          ],
-          "decisions": [],
-          "unresolved_discussions": [],
-          "changed_decisions": []
+          ]
         }
       ]
     }
@@ -31,7 +32,7 @@ def test_build_markdown_report():
     save_analysis_result("2026-06-23", mock_json)
     
     md = build_markdown_report("2026-06-23")
-    assert "# Construction Chat Daily Report: 2026-06-23" in md
-    assert "## Object: ЖК Лесной" in md
+    assert "# Ежедневный отчет по чатам: 2026-06-23" in md
+    assert "## Объект: ЖК Лесной" in md
     assert "Залить бетон" in md
-    assert "(Source Msgs: [101])" in md
+    assert "(Источники: 101)" in md
