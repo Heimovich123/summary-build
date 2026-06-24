@@ -42,7 +42,27 @@ This MVP provides several CLI commands via `src/main.py`:
   python -m src.main collect-bot
   ```
 
-- **`collect-userbot`**: Run the Telethon userbot to collect messages (requires authentication on first run).
+### Telegram User-Account History & Summaries
+
+To use the Telethon userbot, ensure `TELETHON_API_ID`, `TELETHON_API_HASH`, and `TELETHON_SESSION_PATH` are set in `.env`.
+
+- **`list-chats`**: List available chats for the connected Telegram account (to find Chat IDs).
+  ```bash
+  python -m src.main list-chats
+  ```
+
+- **`backfill-userbot`**: Fetch history from `TELEGRAM_SOURCE_CHAT_IDS` for a specific object over the last N days.
+  ```bash
+  python -m src.main backfill-userbot --days 3 --object "ЖК Пример"
+  ```
+
+- **`summary`**: Generate a custom Markdown summary for a specific chat or object over a time window without marking messages as processed.
+  ```bash
+  python -m src.main summary --chat-id -100123456789 --hours 5
+  python -m src.main summary --object "ЖК Пример" --from "2026-06-24 10:00" --to "2026-06-24 15:00"
+  ```
+
+- **`collect-userbot`**: Run the Telethon userbot in listening mode to collect new messages in real-time.
   ```bash
   python -m src.main collect-userbot
   ```

@@ -4,10 +4,11 @@ import uuid
 from datetime import datetime
 from pydantic import ValidationError
 
-from .db import get_unprocessed_messages, mark_messages_processed, save_analysis_result
+from .db import get_unprocessed_messages, mark_messages_processed, save_analysis_result, get_messages_for_window
 from .llm_client import call_llm
 from .models import DailyReport
 from .config import LLM_MODEL_PRIMARY, LLM_MODEL_FALLBACK
+from .report_builder import build_markdown_from_report
 
 SYSTEM_PROMPT = """
 You are an AI analyst for construction chats. Your task is to analyze the provided Telegram messages and extract structured data.
@@ -118,3 +119,23 @@ def run_extraction(object_name: str = None):
         print("Messages marked as processed.")
     else:
         print("Extraction failed.")
+
+def run_custom_summary(chat_id: int = None, object_name: str = None, start_dt: datetime = None, end_dt: datetime = None):
+    messages = get_messages_for_window(chat_id, object_name, start_dt, end_dt)
+    if not messages:
+        print("No messages found for the specified window.")
+        return
+
+    print(f"Processing {len(messages)} messages for custom summary...")
+    prompt_text = build_prompt(messages)
+    report = extract_and_validate(prompt_text)
+
+    if report:
+        md = build_markdown_from_report(report, object_name)
+        timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"data/summary_{timestamp_str}.md"
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(md)
+        print(f"Custom summary successfully generated: {filename}")
+    else:
+        print("Custom summary extraction failed.")

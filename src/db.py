@@ -133,3 +133,38 @@ def get_analysis_result(date_str: str):
     row = cursor.fetchone()
     conn.close()
     return row['raw_json'] if row else None
+
+def get_messages_for_window(chat_id: int = None, object_name: str = None, start_dt: datetime = None, end_dt: datetime = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    query = '''
+        SELECT m.id, m.message_id, m.chat_id, m.sender_name, m.text, m.timestamp, c.object_name, c.chat_title
+        FROM messages m
+        JOIN chat_object_map c ON m.chat_id = c.chat_id
+        WHERE c.is_active = 1
+    '''
+    params = []
+    
+    if chat_id:
+        query += ' AND m.chat_id = ?'
+        params.append(chat_id)
+        
+    if object_name:
+        query += ' AND c.object_name = ?'
+        params.append(object_name)
+        
+    if start_dt:
+        query += ' AND m.timestamp >= ?'
+        params.append(start_dt.isoformat())
+        
+    if end_dt:
+        query += ' AND m.timestamp <= ?'
+        params.append(end_dt.isoformat())
+        
+    query += ' ORDER BY m.timestamp ASC'
+    
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

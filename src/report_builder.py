@@ -3,13 +3,7 @@ from datetime import datetime
 from .db import get_analysis_result
 from .models import DailyReport
 
-def build_markdown_report(date_str: str, object_name: str = None) -> str:
-    raw_json = get_analysis_result(date_str)
-    if not raw_json:
-        return f"Отчет за дату {date_str} не найден."
-    
-    report = DailyReport(**json.loads(raw_json))
-    
+def build_markdown_from_report(report: DailyReport, object_name: str = None) -> str:
     md = [f"# Ежедневный отчет по чатам: {report.date}\n"]
     
     categories_map = {
@@ -45,6 +39,14 @@ def build_markdown_report(date_str: str, object_name: str = None) -> str:
             md.append("\n")
             
     return "\n".join(md)
+
+def build_markdown_report(date_str: str, object_name: str = None) -> str:
+    raw_json = get_analysis_result(date_str)
+    if not raw_json:
+        return f"Отчет за дату {date_str} не найден."
+    
+    report = DailyReport(**json.loads(raw_json))
+    return build_markdown_from_report(report, object_name)
 
 def generate_and_save_report(date_str: str = None, object_name: str = None) -> str:
     if not date_str:
