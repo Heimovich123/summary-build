@@ -134,6 +134,24 @@ def get_analysis_result(date_str: str):
     conn.close()
     return row['raw_json'] if row else None
 
+def find_matching_entities(object_name: str = None, chat_title: str = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT object_name, chat_title, chat_id FROM chat_object_map WHERE is_active = 1')
+    rows = cursor.fetchall()
+    conn.close()
+    
+    results = []
+    for row in rows:
+        match = True
+        if object_name and object_name.lower() not in (row['object_name'] or '').lower():
+            match = False
+        if chat_title and chat_title.lower() not in (row['chat_title'] or '').lower():
+            match = False
+        if match:
+            results.append(dict(row))
+    return results
+
 def get_messages_for_window(chat_id: int = None, object_name: str = None, start_dt: datetime = None, end_dt: datetime = None):
     conn = get_connection()
     cursor = conn.cursor()

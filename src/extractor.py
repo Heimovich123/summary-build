@@ -4,11 +4,12 @@ import uuid
 from datetime import datetime
 from pydantic import ValidationError
 
-from .db import get_unprocessed_messages, mark_messages_processed, save_analysis_result, get_messages_for_window
+from .db import get_unprocessed_messages, mark_messages_processed, save_analysis_result, get_messages_for_window, find_matching_entities
 from .llm_client import call_llm
 from .models import DailyReport
 from .config import LLM_MODEL_PRIMARY, LLM_MODEL_FALLBACK
 from .report_builder import build_markdown_from_report
+from .telegram_sender import run_send_report
 
 SYSTEM_PROMPT = """
 You are an AI analyst for construction chats. Your task is to analyze the provided Telegram messages and extract structured data.
@@ -120,22 +121,61 @@ def run_extraction(object_name: str = None):
     else:
         print("Extraction failed.")
 
-def run_custom_summary(chat_id: int = None, object_name: str = None, start_dt: datetime = None, end_dt: datetime = None):
-    messages = get_messages_for_window(chat_id, object_name, start_dt, end_dt)
+def run_custom_summary(chat_id: int = None, object_name: str = None, chat_title: str = None, start_dt: datetime = None, end_dt: datetime = None, send: bool = False):
+    exact_object_name = object_name
+    
+    if (object_name or chat_title) and not chat_id:
+        matches = find_matching_entities(object_name=object_name, chat_title=chat_title)
+        
+        if object_name:
+            unique_objects = list(set(r['object_name'] for r in matches if r['object_name']))
+            if len(unique_objects) == 0:
+                print("Объект не найден")
+                return
+            elif len(unique_objects) > 1:
+                print(f"Найдено несколько объектов: {', '.join(unique_objects)}. Уточните запрос.")
+                return
+            else:
+                exact_object_name = unique_objects[0]
+                
+        elif chat_title:
+            unique_chats = list(set((r['chat_title'], r['chat_id']) for r in matches if r['chat_title']))
+            if len(unique_chats) == 0:
+                print("Чат не найден")
+                return
+            elif len(unique_chats) > 1:
+                print(f"Найдено несколько чатов: {', '.join(c[0] for c in unique_chats)}. Уточните запрос.")
+                return
+            else:
+                chat_id = unique_chats[0][1]
+                chat_title = unique_chats[0][0]
+
+    messages = get_messages_for_window(chat_id, exact_object_name, start_dt, end_dt)
+    
+    print(f"Selected object/chat: {exact_object_name or chat_title or 'All'}")
+    print(f"Period: {start_dt or 'Any'} - {end_dt or 'Any'}")
+    print(f"Messages count: {len(messages)}")
+
     if not messages:
-        print("No messages found for the specified window.")
+        print("Нет сообщений за выбранный период.")
         return
 
-    print(f"Processing {len(messages)} messages for custom summary...")
     prompt_text = build_prompt(messages)
     report = extract_and_validate(prompt_text)
 
     if report:
-        md = build_markdown_from_report(report, object_name)
+        md = build_markdown_from_report(report, exact_object_name)
         timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"data/summary_{timestamp_str}.md"
         with open(filename, "w", encoding="utf-8") as f:
             f.write(md)
-        print(f"Custom summary successfully generated: {filename}")
+            
+        print(f"Markdown path: {filename}")
+        
+        if send:
+            run_send_report(filename, None)
+            print("Sent: yes")
+        else:
+            print("Sent: no")
     else:
         print("Custom summary extraction failed.")

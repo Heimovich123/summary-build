@@ -35,11 +35,14 @@ def main():
     ], help="Command to run")
     parser.add_argument("--date", type=str, help="Date for report (YYYY-MM-DD)", default=datetime.now().strftime('%Y-%m-%d'))
     parser.add_argument("--object", type=str, help="Filter by object_name", default=None)
+    parser.add_argument("--chat", type=str, help="Filter by chat title", default=None)
     parser.add_argument("--days", type=int, help="Days for backfill", default=3)
-    parser.add_argument("--chat-id", type=int, help="Filter by chat ID", default=None)
-    parser.add_argument("--hours", type=int, help="Hours for custom summary window", default=24)
+    parser.add_argument("--chat-id", type=int, help="Filter by exact chat ID", default=None)
+    parser.add_argument("--hours", type=int, help="Hours for custom summary window", default=None)
+    parser.add_argument("--minutes", type=int, help="Minutes for custom summary window", default=None)
     parser.add_argument("--from", dest="from_dt", type=str, help="Start datetime (YYYY-MM-DD HH:MM)")
     parser.add_argument("--to", dest="to_dt", type=str, help="End datetime (YYYY-MM-DD HH:MM)")
+    parser.add_argument("--send", action="store_true", help="Send summary via Telegram")
 
     args = parser.parse_args()
 
@@ -61,9 +64,23 @@ def main():
     elif args.command == "summary":
         start_dt = parse_dt(args.from_dt)
         end_dt = parse_dt(args.to_dt)
-        if not start_dt:
-            start_dt = datetime.now() - timedelta(hours=args.hours)
-        run_custom_summary(chat_id=args.chat_id, object_name=args.object, start_dt=start_dt, end_dt=end_dt)
+        
+        if not start_dt and not end_dt:
+            if args.minutes is not None:
+                start_dt = datetime.now() - timedelta(minutes=args.minutes)
+            elif args.hours is not None:
+                start_dt = datetime.now() - timedelta(hours=args.hours)
+            else:
+                start_dt = datetime.now() - timedelta(hours=24)
+                
+        run_custom_summary(
+            chat_id=args.chat_id, 
+            object_name=args.object, 
+            chat_title=args.chat,
+            start_dt=start_dt, 
+            end_dt=end_dt,
+            send=args.send
+        )
     elif args.command == "report":
         md_path = generate_and_save_report(args.date, args.object)
         excel_path = export_to_excel(args.date, args.object)

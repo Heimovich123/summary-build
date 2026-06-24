@@ -8,8 +8,9 @@ from .db import insert_message, upsert_chat_map
 def get_client() -> TelegramClient:
     if not TELETHON_API_ID or not TELETHON_API_HASH:
         raise ValueError("Telethon API credentials not set.")
+    import telethon.network.connection
     os.makedirs(os.path.dirname(os.path.abspath(TELETHON_SESSION_PATH)), exist_ok=True)
-    return TelegramClient(TELETHON_SESSION_PATH, TELETHON_API_ID, TELETHON_API_HASH)
+    return TelegramClient(TELETHON_SESSION_PATH, TELETHON_API_ID, TELETHON_API_HASH, use_ipv6=False, request_retries=5, connection_retries=5, connection=telethon.network.connection.tcpobfuscated.ConnectionTcpObfuscated)
 
 def run_collector_userbot():
     try:

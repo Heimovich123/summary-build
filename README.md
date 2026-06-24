@@ -66,3 +66,12 @@ To use the Telethon userbot, ensure `TELETHON_API_ID`, `TELETHON_API_HASH`, and 
   ```bash
   python -m src.main collect-userbot
   ```
+
+## Hermes usage examples
+
+Examples:
+```bash
+python -m src.main summary --object "Офис" --hours 3
+python -m src.main summary --chat "Электрика" --minutes 10
+python -m src.main summary --object "Офис" --hours 3 --send
+```

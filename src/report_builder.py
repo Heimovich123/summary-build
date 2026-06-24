@@ -16,7 +16,7 @@ def build_markdown_from_report(report: DailyReport, object_name: str = None) -> 
     }
 
     for obj in report.objects:
-        if object_name and obj.object_name != object_name:
+        if object_name and object_name.lower() not in obj.object_name.lower():
             continue
             
         md.append(f"## Объект: {obj.object_name}\n")
